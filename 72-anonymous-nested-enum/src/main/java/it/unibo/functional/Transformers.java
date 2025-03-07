@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  * A special utility class with methods that transform collections using {@link Function}s provided as parameters.
  */
-public final class Transformers {
+public final class     Transformers {
 
     private Transformers() { }
 
@@ -28,10 +28,7 @@ public final class Transformers {
      * @param <O> output elements type
      * @return A "flattened" list of the produced elements
      */
-    public static <I, O> List<O> flattenTransform(
-        final Iterable<? extends I> base,
-        final Function<I, ? extends Collection<? extends O>> transformer
-    ) {
+    public static <I, O> List<O> flattenTransform(final Iterable<? extends I> base, final Function<I,? extends Collection<? extends O>> transformer) {
         final var result = new ArrayList<O>();
         for (final I input : Objects.requireNonNull(base, "The base iterable cannot be null")) {
             result.addAll(transformer.call(input));
@@ -54,7 +51,19 @@ public final class Transformers {
      * @return A transformed list where each input element is replaced with the produced elements
      */
     public static <I, O> List<O> transform(final Iterable<I> base, final Function<I, O> transformer) {
-        return null;
+        
+        return flattenTransform(base,new Function<I,Collection<? extends O>>() {
+            
+             
+            @Override
+            public Collection<? extends O> call(I input) {
+                List<O> res =new ArrayList<>();
+                res.add(transformer.call(input));
+                return res;  
+            }
+            
+        });
+        
     }
 
     /**
@@ -69,10 +78,21 @@ public final class Transformers {
      * @param <I> type of the collection elements
      * @return A flattened list with the elements of each collection in the input
      */
-    public static <I> List<? extends I> flatten(final Iterable<? extends Collection<? extends I>> base) {
-        return null;
-    }
-
+    
+        
+        public static <I> List<? extends I> flatten(final Iterable<? extends Collection<? extends I>> base) {        //un iterabile con dentro una collection di  I
+            
+            return flattenTransform(base, new Function<Collection<? extends I>, Collection<? extends I>>() {
+                
+                @Override
+                public Collection<? extends I> call(Collection<? extends I> input) {
+                    return input; 
+                }
+            
+            });
+        }
+        
+    
     /**
      * A function that applies a test to each element of an {@link Iterable}, returning a list containing only the
      * elements that pass the test.
@@ -87,7 +107,13 @@ public final class Transformers {
      * @return A list containing only the elements that passed the test
      */
     public static <I> List<I> select(final Iterable<I> base, final Function<I, Boolean> test) {
-        return null;
+        List<I> res= new ArrayList<>();
+        for(I input : base){
+            if(input!=null && test.call(input)){
+                res.add(input);
+            }
+        }
+        return res;
     }
 
     /**
@@ -103,6 +129,12 @@ public final class Transformers {
      * @return A list containing only the elements that passed the test
      */
     public static <I> List<I> reject(final Iterable<I> base, final Function<I, Boolean> test) {
-        return null;
+        
+        return select(base,new Function<I,Boolean>() {
+            @Override
+            public Boolean call(I input) {
+                return !(test.call(input));
+            }
+        });
     }
 }
